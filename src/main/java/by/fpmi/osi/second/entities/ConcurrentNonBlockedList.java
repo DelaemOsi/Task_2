@@ -2,11 +2,9 @@ package by.fpmi.osi.second.entities;
 
 import java.util.*;
 
-
-
 public class ConcurrentNonBlockedList<T> {
 
-    final transient Object lock = new Object();
+    private final transient Object lock = new Object();
     private transient volatile T[] array;
 
     public ConcurrentNonBlockedList() {
@@ -25,33 +23,32 @@ public class ConcurrentNonBlockedList<T> {
         return array[index];
     }
 
-    public boolean add(T element) {
+    public void add(T element) {
         synchronized (lock) {
             T[] prevArray = toArray();
             int len = prevArray.length;
             prevArray = Arrays.copyOf(prevArray, len + 1);
             prevArray[len] = element;
             setArray((T[]) prevArray);
-            return true;
         }
     }
 
-    public T remove(int index) {
+    public void remove(int index) {
         synchronized (lock) {
-            T[] prevArray = toArray();
-            int len = prevArray.length;
-            T oldValue = prevArray[index];
-            int numMoved = len - index - 1;
+            T[] previousArray = toArray();
+            int len = previousArray.length;
+            T oldValue = previousArray[index];
+            int offset = len - index - 1;
             T[] newElements;
-            if (numMoved == 0)
-                newElements = Arrays.copyOf(prevArray, len - 1);
+            if (offset == 0) {
+                newElements = Arrays.copyOf(previousArray, len - 1);
+            }
             else {
                 newElements = (T[]) new Object[len - 1];
-                System.arraycopy(prevArray, 0, newElements, 0, index);
-                System.arraycopy(prevArray, index + 1, newElements, index, numMoved);
+                System.arraycopy(previousArray, 0, newElements, 0, index);
+                System.arraycopy(previousArray, index + 1, newElements, index, offset);
             }
             setArray(newElements);
-            return oldValue;
         }
     }
 

@@ -3,10 +3,8 @@ package by.fpmi.osi.second.entities;
 import org.junit.Assert;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.IntStream;
 
 
 public class ConcurrentNonBlockedListTest {
@@ -16,15 +14,16 @@ public class ConcurrentNonBlockedListTest {
     public void testAdd() throws InterruptedException {
         int expectedSize = 1000;
         ConcurrentNonBlockedList<Integer> list = new ConcurrentNonBlockedList<>();
-        Integer[]expectedElementsSorted = new Integer[expectedSize];
+        Integer[] expectedElementsSorted = new Integer[expectedSize];
         Thread[] threadList = new Thread[expectedSize];
-        for (int i = 0; i < expectedSize; i++) {
-            int numberToAdd = i;
-            Thread testThread = new Thread(() -> list.add(numberToAdd));
+
+        IntStream.range(0, expectedSize).forEach(i -> {
+            Thread testThread = new Thread(() -> list.add(i));
             threadList[i] = testThread;
             threadList[i].start();
             expectedElementsSorted[i] = i;
-        }
+        });
+
         for (int i = 0; i < expectedSize; i++) {
             threadList[i].join();
         }
@@ -36,21 +35,22 @@ public class ConcurrentNonBlockedListTest {
 
     @Test
     public void testRemove() throws InterruptedException {
-        int expectedSize = 1000;
+        int startSize = 1000;
         ConcurrentNonBlockedList<Integer> list = new ConcurrentNonBlockedList<>();
-        for (int i = 0; i < expectedSize; i++) {
+        for (int i = 0; i < startSize; i++) {
             list.add(i);
         }
-        Thread[] threadList = new Thread[expectedSize];
-        for (int i = 0; i < expectedSize - 1; i++) {
+        Thread[] threadList = new Thread[startSize];
+        for (int i = 0; i < startSize - 1; i++) {
             Thread testThread = new Thread(() -> list.remove(0));
             threadList[i] = testThread;
             threadList[i].start();
         }
-        for (int i = 0; i < expectedSize - 1; i++) {
+        for (int i = 0; i < startSize - 1; i++) {
             threadList[i].join();
         }
-        Assert.assertEquals( 1, list.size());
+        int expectedSize = 1;
+        Assert.assertEquals(expectedSize, list.size());
     }
 
     @Test
