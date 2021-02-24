@@ -1,19 +1,19 @@
 package by.fpmi.osi.second.entities;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
+
 
 
 public class ConcurrentNonBlockedList<T> {
+
     final transient Object lock = new Object();
     private transient volatile T[] array;
-    private ArrayList<T> elements;
 
     public ConcurrentNonBlockedList() {
         array = (T[]) (new Object[0]);
     }
 
-    final T[] getArray() {
+    public final T[] toArray() {
         return array;
     }
 
@@ -27,7 +27,7 @@ public class ConcurrentNonBlockedList<T> {
 
     public boolean add(T element) {
         synchronized (lock) {
-            T[] prevArray = getArray();
+            T[] prevArray = toArray();
             int len = prevArray.length;
             prevArray = Arrays.copyOf(prevArray, len + 1);
             prevArray[len] = element;
@@ -38,7 +38,7 @@ public class ConcurrentNonBlockedList<T> {
 
     public T remove(int index) {
         synchronized (lock) {
-            T[] prevArray = getArray();
+            T[] prevArray = toArray();
             int len = prevArray.length;
             T oldValue = prevArray[index];
             int numMoved = len - index - 1;
@@ -56,7 +56,7 @@ public class ConcurrentNonBlockedList<T> {
     }
 
     public int size() {
-        return getArray().length;
+        return toArray().length;
     }
 
 }
