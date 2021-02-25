@@ -1,59 +1,88 @@
 package by.fpmi.osi.second.entities;
 
-import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class ConcurrentNonBlockedList<T> {
+public class ConcurrentNonBlockedList<E> {
 
-    private final transient Object lock = new Object();
-    private transient volatile T[] array;
+    private volatile Node<E> head;
+    private volatile Node<E> tail;
+    private final AtomicInteger size = new AtomicInteger(0);
 
     public ConcurrentNonBlockedList() {
-        array = (T[]) (new Object[0]);
     }
 
-    public final T[] toArray() {
-        return array;
-    }
-
-    final void setArray(T[] a) {
-        array = a;
-    }
-
-    public T get(int index) {
-        return array[index];
-    }
-
-    public void add(T element) {
-        synchronized (lock) {
-            T[] prevArray = toArray();
-            int len = prevArray.length;
-            prevArray = Arrays.copyOf(prevArray, len + 1);
-            prevArray[len] = element;
-            setArray((T[]) prevArray);
+    private static class Node<E> {
+        Node<E> next;
+        E value;
+        public Node(E value) {
+            this.value = value;
         }
     }
+
+    public void add(E element) {
+        size.incrementAndGet();
+        if (head == null) {
+            head = new Node<>(element);
+            return;
+        }
+        if (tail == null) {
+            synchronized (head) {
+                tail = new Node<>(element);
+                head.next = tail;
+            }
+            return;
+        }
+        synchronized (tail) {
+            Node<E> newNode = new Node<>(element);
+            tail.next = newNode;
+            tail = newNode;
+        }
+    }
+
 
     public void remove(int index) {
-        synchronized (lock) {
-            T[] previousArray = toArray();
-            int len = previousArray.length;
-            T oldValue = previousArray[index];
-            int offset = len - index - 1;
-            T[] newElements;
-            if (offset == 0) {
-                newElements = Arrays.copyOf(previousArray, len - 1);
-            }
-            else {
-                newElements = (T[]) new Object[len - 1];
-                System.arraycopy(previousArray, 0, newElements, 0, index);
-                System.arraycopy(previousArray, index + 1, newElements, index, offset);
-            }
-            setArray(newElements);
+        size.decrementAndGet();
+        if (index == 0) {
+            head = head.next;
+            return;
         }
+        Node<E> parentNode = getNode(index - 1);
+        synchronized (parentNode) {
+            Node<E> nextNode = parentNode.next;
+            Node<E> newNextNode = nextNode.next;
+            parentNode.next = newNextNode;
+            newNextNode.next = null;
+        }
+    }
+
+    public E get(int index) {
+        return getNode(index).value;
+    }
+
+    public Node<E> getNode(int index) {
+        Node<E> currentNode = head;
+        for (int i = 0; i < index; i++) {
+            currentNode = currentNode.next;
+        }
+        return currentNode;
     }
 
     public int size() {
-        return toArray().length;
+        return size.get();
+    }
+
+    //method crete just for simple testing, so it use full synchronization
+    public Object[] toArray() {
+        int size = size();
+        Object[] array = new Object[size];
+        for (int i = 0; i < size; i++) {
+            array[i] = get(i);
+            if (i > 985) {
+                System.out.println("s");
+            }
+        }
+        return array;
     }
 
 }
