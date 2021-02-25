@@ -1,5 +1,6 @@
 package by.fpmi.osi.second.entities;
 
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,6 +16,11 @@ public class ConcurrentNonBlockedList<E> {
     private static class Node<E> {
         Node<E> next;
         E value;
+
+        public Node() {
+
+        }
+
         public Node(E value) {
             this.value = value;
         }
@@ -22,16 +28,17 @@ public class ConcurrentNonBlockedList<E> {
 
     public void add(E element) {
         size.incrementAndGet();
-        if (head == null) {
-            head = new Node<>(element);
-            return;
-        }
-        if (tail == null) {
-            synchronized (head) {
+        synchronized (this) {
+            if (head == null) {
+                head = new Node<>(element);
+                return;
+            }
+
+            if (tail == null) {
                 tail = new Node<>(element);
                 head.next = tail;
+                return;
             }
-            return;
         }
         synchronized (tail) {
             Node<E> newNode = new Node<>(element);
@@ -40,6 +47,7 @@ public class ConcurrentNonBlockedList<E> {
         }
     }
 
+    ConcurrentLinkedQueue<E> p = new ConcurrentLinkedQueue<>();
 
     public void remove(int index) {
         size.decrementAndGet();
@@ -75,13 +83,11 @@ public class ConcurrentNonBlockedList<E> {
     //method crete just for simple testing, so it use full synchronization
     public Object[] toArray() {
         int size = size();
-        Object[] array = new Object[size];
+        E[] array = (E[]) new Object[size];
         for (int i = 0; i < size; i++) {
             array[i] = get(i);
-            if (i > 985) {
-                System.out.println("s");
-            }
         }
+        Arrays.sort(array);
         return array;
     }
 

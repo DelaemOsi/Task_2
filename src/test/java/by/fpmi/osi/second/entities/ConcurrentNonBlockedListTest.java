@@ -30,6 +30,7 @@ public class ConcurrentNonBlockedListTest {
         Object[] elementsActual = concurrentList.toArray();
         Arrays.sort(elementsActual);
         Assert.assertArrayEquals(elementsActual, expectedElementsSorted);
+
     }
 
     @Test
