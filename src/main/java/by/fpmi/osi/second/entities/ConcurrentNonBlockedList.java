@@ -1,7 +1,6 @@
 package by.fpmi.osi.second.entities;
 
 import java.util.Arrays;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ConcurrentNonBlockedList<E> {
@@ -13,7 +12,7 @@ public class ConcurrentNonBlockedList<E> {
     public ConcurrentNonBlockedList() {
     }
 
-    private static class Node<E> {
+    private static final class Node<E> {
         Node<E> next;
         E value;
 
@@ -33,7 +32,6 @@ public class ConcurrentNonBlockedList<E> {
                 head = new Node<>(element);
                 return;
             }
-
             if (tail == null) {
                 tail = new Node<>(element);
                 head.next = tail;
@@ -46,8 +44,6 @@ public class ConcurrentNonBlockedList<E> {
             tail = newNode;
         }
     }
-
-    ConcurrentLinkedQueue<E> p = new ConcurrentLinkedQueue<>();
 
     public void remove(int index) {
         size.decrementAndGet();
@@ -80,7 +76,6 @@ public class ConcurrentNonBlockedList<E> {
         return size.get();
     }
 
-    //method crete just for simple testing, so it use full synchronization
     public Object[] toArray() {
         int size = size();
         E[] array = (E[]) new Object[size];
